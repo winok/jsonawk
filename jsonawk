@@ -1,0 +1,46 @@
+#!/usr/bin/env node
+
+var program = require('commander');
+var readline = require('readline');
+var _ = require('lodash');
+var child = require('child_process');
+var path = require('path');
+var fs = require('fs');
+var pack = require('./package.json');
+
+var theCode = null;
+program
+  .version(pack.version)
+  .arguments('<jscode>')
+  .action(function (jscode) {
+    theCode = jscode;
+  });
+program.parse(process.argv);
+
+if (!theCode) {
+  console.error('no js code, eg: cat file.json | jsonawk \'console.log(data)\'');
+  process.exit(1);
+}
+
+try {
+  var func = new Function('data', '_ = this._; data = arguments[0]; return (function() { ' + theCode + ' })()');
+} catch (e) {
+  console.log('js code illegal:\n```\n' + theCode);
+  return;
+}
+
+var rl = readline.createInterface({
+  input: process.stdin,
+  output: process.stdout,
+  terminal: false
+});
+
+rl.on('line', function (line) {
+
+  var data = JSON.parse(line.trim());
+  func.apply({'_': _ }, [data]);
+})
+
+
+
+
