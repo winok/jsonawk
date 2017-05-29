@@ -19,13 +19,54 @@ program.parse(process.argv);
 
 if (!theCode) {
   console.error('no js code, eg: cat file.json | jsonawk \'console.log(data)\'');
-  process.exit(1);
+  process.exit(-1);
 }
 
 try {
-  var func = new Function('data', '_ = this._; data = arguments[0]; return (function() { ' + theCode + ' })()');
+
+  theCode = theCode.trim();
+  theCode += '1f7c93fd';
+  var beginCode = ''
+    , code = ''
+    , endCode = '';
+  var hasBegin = theCode.match(/^BEGIN\s*(.*)1f7c93fd$/m);
+  if (hasBegin) {
+    var foldN = 0;
+    for (var i = 0; i < hasBegin[1].length; i++) {
+      beginCode += hasBegin[1].charAt(i);
+      if (hasBegin[1].charAt(i) == '}') {
+        foldN--;
+        if (foldN == 0) {
+          code = hasBegin[1].substr(i+1) + '1f7c93fd';
+          break;
+        }
+      }
+      if (hasBegin[1].charAt(i) == '{') foldN++;  
+    }
+  } else {
+    code = theCode;
+  }
+
+  var hasEnd = code.match(/^(.*)}\s*END\s*{(.*)1f7c93fd/m);
+  if (hasEnd) {
+    code = hasEnd[1] + '}';
+    endCode = '{' + hasEnd[2];
+  }
+
+  var Func = new Function('_', beginCode + ' return { \
+    line: function($,data,_) { \
+      '+ code + '\
+    }, \
+    end: function() { \
+      '+ endCode + '\
+    }}');
+  var func = Func(_);    
+  //var func = new Function('data', '_ = this._; $ = arguments[0]; data = arguments[0]; return (function() { ' + theCode + ' })()');
+
 } catch (e) {
-  console.log('js code illegal:\n```\n' + theCode);
+  //console.log(e);
+  
+  console.log('js code illegal:\n```\n' + theCode.replace('1f7c93fd', ''));
   return;
 }
 
@@ -38,9 +79,9 @@ var rl = readline.createInterface({
 rl.on('line', function (line) {
 
   var data = JSON.parse(line.trim());
-  func.apply({'_': _ }, [data]);
+  func.line.apply({}, [data, data, _]);
 })
 
-
-
-
+rl.on('close', function(line){
+    func.end();
+})
