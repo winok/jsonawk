@@ -25,34 +25,32 @@ if (!theCode) {
 try {
 
   theCode = theCode.trim();
-  theCode += '1f7c93fd';
   var beginCode = ''
     , code = ''
     , endCode = '';
-  var hasBegin = theCode.match(/^BEGIN\s*(.*)1f7c93fd$/m);
-  if (hasBegin) {
+
+  if (theCode.indexOf('BEGIN') == 0) {
+    var snip = theCode.substr(5);
     var foldN = 0;
-    for (var i = 0; i < hasBegin[1].length; i++) {
-      beginCode += hasBegin[1].charAt(i);
-      if (hasBegin[1].charAt(i) == '}') {
+    for (var i = 0; i < snip.length; i++) {
+      beginCode += snip.charAt(i);
+      if (snip.charAt(i) == '}') {
         foldN--;
         if (foldN == 0) {
-          code = hasBegin[1].substr(i+1) + '1f7c93fd';
+          code = snip.substr(i + 1);
           break;
         }
       }
-      if (hasBegin[1].charAt(i) == '{') foldN++;  
+      if (snip.charAt(i) == '{') foldN++;
     }
   } else {
     code = theCode;
   }
-
-  var hasEnd = code.match(/^(.*)}\s*END\s*{(.*)1f7c93fd/m);
-  if (hasEnd) {
-    code = hasEnd[1] + '}';
-    endCode = '{' + hasEnd[2];
+  var codes = code.split(/}\s*END\s*{/m);
+  if (codes.length == 2) {
+    code = codes[0] + '}';
+    endCode = '{' + codes[1];
   }
-  code = code.replace('1f7c93fd', '');
 
   var Func = new Function('_', beginCode + ' return { \
     line: function($,data,_) { \
@@ -61,13 +59,10 @@ try {
     end: function() { \
       '+ endCode + '\
     }}');
-  var func = Func(_);    
-  //var func = new Function('data', '_ = this._; $ = arguments[0]; data = arguments[0]; return (function() { ' + theCode + ' })()');
-
+  var func = Func(_);
 } catch (e) {
-  //console.log(e);
-  
-  console.log('js code illegal:\n```\n' + theCode.replace('1f7c93fd', ''));
+
+  console.log('js code illegal:\n```\n' + theCode);
   return;
 }
 
@@ -83,6 +78,6 @@ rl.on('line', function (line) {
   func.line.apply({}, [data, data, _]);
 })
 
-rl.on('close', function(line){
-    func.end();
+rl.on('close', function (line) {
+  func.end();
 })
