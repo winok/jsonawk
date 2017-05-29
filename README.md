@@ -17,7 +17,7 @@ file.json
 ```
 
 ```sh
-cat file.json | jsonawk 'console.log($.name))'
+cat file.json | jsonawk 'console.log($.name)'
 torvalds
 tj
 ```

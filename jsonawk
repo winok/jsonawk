@@ -51,6 +51,7 @@ try {
     code = codes[0] + '}';
     endCode = '{' + codes[1];
   }
+  console.log(beginCode,"|",code,"|",endCode);
 
   var Func = new Function('_', beginCode + ' return { \
     line: function($,data,_) { \
