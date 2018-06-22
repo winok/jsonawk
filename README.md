@@ -6,7 +6,7 @@
 
 # installation
 ```sh
-npm install -g jsonawk
+npm install -g jsonawk-cli
 ```
 
 # usage
